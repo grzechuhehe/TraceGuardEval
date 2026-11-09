@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "score_min": 1,
+  "rubric_id": "incident-response",
+  "rubric_version": "1.0",
+  "profile_id": "pp-v1",
+  "scenarios": 30,
+  "trajectories": 120,
+  "correct_per_scenario": 1,
+  "incorrect_per_scenario": 3,
+  "pilot_size": 80,
+  "test_size": 40,
+  "score_max": 5,
+  "repeats": 3,
+  "pairs": 0
+}

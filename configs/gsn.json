@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "score_min": 1,
+  "rubric_id": "incident-response",
+  "rubric_version": "1.0",
+  "profile_id": "gsn-v1",
+  "scenarios": 15,
+  "trajectories": 60,
+  "correct_per_scenario": 2,
+  "incorrect_per_scenario": 2,
+  "pilot_size": 20,
+  "test_size": 40,
+  "score_max": 10,
+  "repeats": 3,
+  "pairs": 20
+}

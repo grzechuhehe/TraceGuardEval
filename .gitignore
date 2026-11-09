@@ -8,3 +8,5 @@ __pycache__/
 artifacts/
 dist/
 .ipynb_checkpoints/
+/docs/
+/handoff_TraceGuard.md

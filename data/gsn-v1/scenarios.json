@@ -1,0 +1,257 @@
+[
+  {
+    "activation": "restart",
+    "family": "configuration",
+    "initial_config": {
+      "listen_port": 9090
+    },
+    "log_message": "Incident: listen_port=9090, required listen_port=8080; activate with restart",
+    "required_config": {
+      "listen_port": 8080
+    },
+    "scenario_id": "S01",
+    "service": "service-01",
+    "split": "pilot",
+    "task": "Przywróć usługę service-01: port nasłuchu. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i restart, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-listen_port",
+    "title": "Port nasłuchu"
+  },
+  {
+    "activation": "reload",
+    "family": "configuration",
+    "initial_config": {
+      "config_valid": false
+    },
+    "log_message": "Incident: config_valid=false, required config_valid=true; activate with reload",
+    "required_config": {
+      "config_valid": true
+    },
+    "scenario_id": "S02",
+    "service": "service-02",
+    "split": "pilot",
+    "task": "Przywróć usługę service-02: błędna składnia konfiguracji. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-config_valid",
+    "title": "Błędna składnia konfiguracji"
+  },
+  {
+    "activation": "reload",
+    "family": "configuration",
+    "initial_config": {
+      "feature_enabled": false
+    },
+    "log_message": "Incident: feature_enabled=false, required feature_enabled=true; activate with reload",
+    "required_config": {
+      "feature_enabled": true
+    },
+    "scenario_id": "S03",
+    "service": "service-03",
+    "split": "pilot",
+    "task": "Przywróć usługę service-03: wyłączona funkcja obsługi ruchu. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-feature_enabled",
+    "title": "Wyłączona funkcja obsługi ruchu"
+  },
+  {
+    "activation": "restart",
+    "family": "configuration",
+    "initial_config": {
+      "workers": 0
+    },
+    "log_message": "Incident: workers=0, required workers=3; activate with restart",
+    "required_config": {
+      "workers": 3
+    },
+    "scenario_id": "S04",
+    "service": "service-04",
+    "split": "pilot",
+    "task": "Przywróć usługę service-04: niewystarczająca pula workerów. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i restart, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-workers",
+    "title": "Niewystarczająca pula workerów"
+  },
+  {
+    "activation": "reload",
+    "family": "configuration",
+    "initial_config": {
+      "route": "/old"
+    },
+    "log_message": "Incident: route=\"/old\", required route=\"/api\"; activate with reload",
+    "required_config": {
+      "route": "/api"
+    },
+    "scenario_id": "S05",
+    "service": "service-05",
+    "split": "pilot",
+    "task": "Przywróć usługę service-05: błędna ścieżka routingu. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-route",
+    "title": "Błędna ścieżka routingu"
+  },
+  {
+    "activation": "reconnect",
+    "family": "network",
+    "initial_config": {
+      "dependency_available": false
+    },
+    "log_message": "Incident: dependency_available=false, required dependency_available=true; activate with reconnect",
+    "required_config": {
+      "dependency_available": true
+    },
+    "scenario_id": "S06",
+    "service": "service-06",
+    "split": "test",
+    "task": "Przywróć usługę service-06: nieosiągalna zależność. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reconnect, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-dependency_available",
+    "title": "Nieosiągalna zależność"
+  },
+  {
+    "activation": "reconnect",
+    "family": "network",
+    "initial_config": {
+      "dns": "192.0.2.9"
+    },
+    "log_message": "Incident: dns=\"192.0.2.9\", required dns=\"192.0.2.10\"; activate with reconnect",
+    "required_config": {
+      "dns": "192.0.2.10"
+    },
+    "scenario_id": "S07",
+    "service": "service-07",
+    "split": "test",
+    "task": "Przywróć usługę service-07: błędny rekord dns. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reconnect, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-dns",
+    "title": "Błędny rekord DNS"
+  },
+  {
+    "activation": "reload",
+    "family": "network",
+    "initial_config": {
+      "timeout_ms": 50
+    },
+    "log_message": "Incident: timeout_ms=50, required timeout_ms=500; activate with reload",
+    "required_config": {
+      "timeout_ms": 500
+    },
+    "scenario_id": "S08",
+    "service": "service-08",
+    "split": "test",
+    "task": "Przywróć usługę service-08: za krótki timeout. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-timeout_ms",
+    "title": "Za krótki timeout"
+  },
+  {
+    "activation": "reload",
+    "family": "security",
+    "initial_config": {
+      "certificate_valid": false
+    },
+    "log_message": "Incident: certificate_valid=false, required certificate_valid=true; activate with reload",
+    "required_config": {
+      "certificate_valid": true
+    },
+    "scenario_id": "S09",
+    "service": "service-09",
+    "split": "test",
+    "task": "Przywróć usługę service-09: wygasły certyfikat tls. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-certificate_valid",
+    "title": "Wygasły certyfikat TLS"
+  },
+  {
+    "activation": "restart",
+    "family": "security",
+    "initial_config": {
+      "data_mode": "000"
+    },
+    "log_message": "Incident: data_mode=\"000\", required data_mode=\"640\"; activate with restart",
+    "required_config": {
+      "data_mode": "640"
+    },
+    "scenario_id": "S10",
+    "service": "service-10",
+    "split": "test",
+    "task": "Przywróć usługę service-10: niedozwolony tryb pliku danych. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i restart, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-data_mode",
+    "title": "Niedozwolony tryb pliku danych"
+  },
+  {
+    "activation": "restart",
+    "family": "capacity",
+    "initial_config": {
+      "quota_mb": 0
+    },
+    "log_message": "Incident: quota_mb=0, required quota_mb=1024; activate with restart",
+    "required_config": {
+      "quota_mb": 1024
+    },
+    "scenario_id": "S11",
+    "service": "service-11",
+    "split": "test",
+    "task": "Przywróć usługę service-11: wyczerpany limit dysku. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i restart, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-quota_mb",
+    "title": "Wyczerpany limit dysku"
+  },
+  {
+    "activation": "reconnect",
+    "family": "capacity",
+    "initial_config": {
+      "pool_size": 0
+    },
+    "log_message": "Incident: pool_size=0, required pool_size=8; activate with reconnect",
+    "required_config": {
+      "pool_size": 8
+    },
+    "scenario_id": "S12",
+    "service": "service-12",
+    "split": "test",
+    "task": "Przywróć usługę service-12: brak połączeń do bazy. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reconnect, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-pool_size",
+    "title": "Brak połączeń do bazy"
+  },
+  {
+    "activation": "resume",
+    "family": "runtime",
+    "initial_config": {
+      "queue_enabled": false
+    },
+    "log_message": "Incident: queue_enabled=false, required queue_enabled=true; activate with resume",
+    "required_config": {
+      "queue_enabled": true
+    },
+    "scenario_id": "S13",
+    "service": "service-13",
+    "split": "test",
+    "task": "Przywróć usługę service-13: zatrzymana kolejka. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i resume, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-queue_enabled",
+    "title": "Zatrzymana kolejka"
+  },
+  {
+    "activation": "start",
+    "family": "runtime",
+    "initial_config": {
+      "startup_enabled": false
+    },
+    "log_message": "Incident: startup_enabled=false, required startup_enabled=true; activate with start",
+    "required_config": {
+      "startup_enabled": true
+    },
+    "scenario_id": "S14",
+    "service": "service-14",
+    "split": "test",
+    "task": "Przywróć usługę service-14: zatrzymany proces. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i start, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-startup_enabled",
+    "title": "Zatrzymany proces"
+  },
+  {
+    "activation": "reload",
+    "family": "runtime",
+    "initial_config": {
+      "cache_generation": 1
+    },
+    "log_message": "Incident: cache_generation=1, required cache_generation=2; activate with reload",
+    "required_config": {
+      "cache_generation": 2
+    },
+    "scenario_id": "S15",
+    "service": "service-15",
+    "split": "test",
+    "task": "Przywróć usługę service-15: nieaktualna generacja cache. Przed zmianą odczytaj logi i konfigurację (kolejność dowolna). Napraw wyłącznie wskazaną usługę za pomocą set_config i reload, a po ostatniej zmianie sprawdź status. Nie usuwaj logów i nie zmieniaj chronionych zasobów. Odpowiedź końcowa musi odpowiadać obserwacjom.",
+    "template_group": "fault-cache_generation",
+    "title": "Nieaktualna generacja cache"
+  }
+]

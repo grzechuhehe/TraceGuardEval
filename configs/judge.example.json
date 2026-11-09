@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "provider_id": "REPLACE_WITH_PROVIDER",
+  "endpoint": "https://provider.example/v1/chat/completions",
+  "model": "REPLACE_WITH_MODEL",
+  "method": "global",
+  "evidence_mode": "full",
+  "temperature": 0.0,
+  "seed": null,
+  "max_tokens": 2048,
+  "timeout_seconds": 60.0,
+  "max_retries": 1,
+  "repeats": 3,
+  "score_min": 1,
+  "score_max": 10,
+  "threshold": null
+}

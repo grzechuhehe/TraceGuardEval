@@ -38,8 +38,8 @@ def test_score_calibration_freeze_test_and_offline_report(workspace):
         freeze_experiment(ds, refs, frozen_config, root / 'frozen.json', registry, calibration)
         run_batch(ds, root / 'test.jsonl', frozen_config, judge, registry, 'test', root / 'frozen.json')
     summary = report(ds, refs, root / 'test.jsonl', root / 'frozen.json')
-    assert summary['metrics']['expected'] == summary['metrics']['recorded'] == 120
-    assert summary['cost']['api_calls'] == summary['cost']['input_tokens_unknown_attempts'] == 120
+    assert summary['metrics']['expected'] == summary['metrics']['recorded'] == 150
+    assert summary['cost']['api_calls'] == summary['cost']['input_tokens_unknown_attempts'] == 150
     assert summary['annotator_agreement'] is None
     with pytest.raises(ValueError, match='pilot'):
         calibrate_threshold(ds, refs, root / 'test.jsonl', registry)
@@ -67,9 +67,14 @@ def test_cli_build_validate_and_export_blind_annotations(tmp_path):
     result = cli('build', '--output', ds)
     assert result.returncode == 0, result.stderr
     result = cli('validate', '--dataset', ds)
-    assert result.returncode == 0 and json.loads(result.stdout)['trajectories'] == 60
+    assert result.returncode == 0 and json.loads(result.stdout)['trajectories'] == 150
     out = tmp_path / 'annotations.jsonl'
     result = cli('annotations', '--dataset', ds, '--annotator', 'reviewer', '--split', 'test', '--output', out)
     assert result.returncode == 0, result.stderr
-    assert len(read_jsonl(out)) == 40
+    assert len(read_jsonl(out)) == 50
     assert cli('build', '--output', ds).returncode != 0
+    legacy = tmp_path / 'legacy-dataset'
+    result = cli('build', '--output', legacy, '--configs', 'configs')
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)['trajectories'] == 60
+    assert load_dataset(legacy).profile.profile_id == 'gsn-v1'

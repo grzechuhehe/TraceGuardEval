@@ -9,9 +9,9 @@ from traceguard_core.models import Manifest, ManifestEntry, Profile, Rubric, Sce
 from traceguard_core.rules import reference_rules
 from traceguard_sim.engine import replay, variants
 
-CONFIGS = Path(__file__).resolve().parent / 'configs'
+CONFIGS = Path(__file__).resolve().parent / 'configs' / 'gsn-v2'
 if not CONFIGS.is_dir():
-    CONFIGS = Path(__file__).resolve().parents[2] / 'configs'
+    CONFIGS = Path(__file__).resolve().parents[2] / 'configs' / 'gsn-v2'
 
 
 def read_json(path: Path):

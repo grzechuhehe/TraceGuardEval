@@ -26,7 +26,7 @@ def _new_output(path: Path) -> None:
 def parser() -> argparse.ArgumentParser:
     cli = argparse.ArgumentParser(prog='traceguard', description='TraceGuard GSN: symulator i ewaluacja offline')
     commands = cli.add_subparsers(dest='command', required=True)
-    build = commands.add_parser('build', help='Wygeneruj 60 trajektorii GSN bez API')
+    build = commands.add_parser('build', help='Wygeneruj zbiór GSN bez API (domyślnie v2: 150 trajektorii)')
     build.add_argument('--output', type=Path, required=True)
     build.add_argument('--configs', type=Path, default=CONFIGS)
     validate = commands.add_parser('validate', help='Sprawdź hashe, podział i replay')

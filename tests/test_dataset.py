@@ -9,19 +9,23 @@ from traceguard_core.models import Scenario, digest
 from traceguard_sim.engine import replay, variants
 
 
-def test_sixty_replayable_balanced_traces_and_grouped_split(tmp_path):
-    build_dataset(tmp_path)
+@pytest.mark.parametrize(('configs', 'scenarios', 'pilot', 'test', 'per_scenario', 'classes'), [
+    (Path('configs'), 15, 20, 40, 4, {'PASS': 30, 'FAIL': 30}),
+    (Path('configs/gsn-v2'), 30, 100, 50, 5, {'PASS': 60, 'FAIL': 90}),
+])
+def test_replayable_balanced_traces_and_grouped_split(tmp_path, configs, scenarios, pilot, test, per_scenario, classes):
+    build_dataset(tmp_path, configs)
     dataset = load_dataset(tmp_path)
-    assert len(dataset.traces) == 60
-    assert Counter(e.split for e in dataset.manifest.entries) == {'pilot': 20, 'test': 40}
-    assert len({e.scenario_id for e in dataset.manifest.entries}) == 15
+    assert len(dataset.traces) == pilot + test
+    assert Counter(e.split for e in dataset.manifest.entries) == {'pilot': pilot, 'test': test}
+    assert len({e.scenario_id for e in dataset.manifest.entries}) == scenarios
     for scenario in {e.scenario_id for e in dataset.manifest.entries}:
         entries = [e for e in dataset.manifest.entries if e.scenario_id == scenario]
-        assert len(entries) == 4
+        assert len(entries) == per_scenario
         assert len({e.split for e in entries}) == 1
-    assert Counter(r['planned_class'] for r in dataset.drafts) == {'PASS': 30, 'FAIL': 30}
+    assert Counter(r['planned_class'] for r in dataset.drafts) == classes
     assert all(replay(t, dataset.scenarios[t.scenario_id]) == t for t in dataset.traces)
-    assert validate_dataset(tmp_path)['trajectories'] == 60
+    assert validate_dataset(tmp_path)['trajectories'] == pilot + test
 
 
 def test_v2_has_two_correct_and_three_distinct_faults_per_scenario(tmp_path):
@@ -48,6 +52,13 @@ def test_v2_has_two_correct_and_three_distinct_faults_per_scenario(tmp_path):
                 assert any(e.tool == 'set_config' and e.error is None for e in trace.events)
             else:
                 assert 'FAIL' in verdicts
+
+
+def test_default_build_reproduces_committed_v2_dataset(tmp_path):
+    build_dataset(tmp_path)
+    assert load_dataset(tmp_path).profile.profile_id == 'gsn-v2'
+    for expected in Path('data/gsn-v2').iterdir():
+        assert (tmp_path / expected.name).read_bytes() == expected.read_bytes()
 
 
 def test_legacy_dataset_is_byte_identical(tmp_path):
@@ -83,6 +94,21 @@ def test_validator_rejects_tampered_class_counts(tmp_path):
     rows[0]['planned_class'] = 'FAIL'
     write_jsonl(tmp_path / 'reference_drafts.jsonl', rows)
     with pytest.raises(ValueError, match='class counts'):
+        validate_dataset(tmp_path)
+
+
+@pytest.mark.parametrize('case', ['duplicate_fault', 'mutated_correct'])
+def test_validator_rejects_inconsistent_mutation_metadata(tmp_path, case):
+    build_dataset(tmp_path)
+    rows = read_jsonl(tmp_path / 'reference_drafts.jsonl')
+    if case == 'duplicate_fault':
+        rows[3]['mutation'] = rows[2]['mutation']
+        message = 'duplicate fault'
+    else:
+        rows[0]['mutation'] = 'delete_logs'
+        message = 'marked as mutated'
+    write_jsonl(tmp_path / 'reference_drafts.jsonl', rows)
+    with pytest.raises(ValueError, match=message):
         validate_dataset(tmp_path)
 
 

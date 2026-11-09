@@ -34,14 +34,14 @@ def test_repeats_bypass_cache_resume_deduplicates_and_partial_tail_recovers(tmp_
     with httpx.Client(transport=httpx.MockTransport(respond)) as client:
         judge = HTTPJudge(client)
         run_batch(ds, results, config, judge, registry, split='pilot')
-        assert len(calls) == 60
-        assert len(read_jsonl(results)) == 60
+        assert len(calls) == 300
+        assert len(read_jsonl(results)) == 300
         run_batch(ds, results, config, judge, registry, split='pilot')
-        assert len(calls) == 60
+        assert len(calls) == 300
         with results.open('ab') as f:
             f.write(b'{"partial":')
         run_batch(ds, results, config, judge, registry, split='pilot')
-        assert len(read_jsonl(results)) == 60 and len(calls) == 60
+        assert len(read_jsonl(results)) == 300 and len(calls) == 300
         with pytest.raises(ValueError, match='frozen'):
             run_batch(ds, results, config, judge, registry, split='test')
 

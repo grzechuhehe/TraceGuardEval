@@ -36,7 +36,7 @@ def test_malformed_usage_becomes_format_error(workspace):
             'usage': 'invalid'}))) as client:
         run_batch(ds, root / 'bad-usage.jsonl', c, HTTPJudge(client), registry)
     rows = read_jsonl(root / 'bad-usage.jsonl')
-    assert len(rows) == 60 and all(r['prediction']['status'] == 'ERROR' for r in rows)
+    assert len(rows) == 300 and all(r['prediction']['status'] == 'ERROR' for r in rows)
     assert all(r['attempts'][0]['error_kind'] == 'FORMAT' for r in rows)
 
 
@@ -56,8 +56,8 @@ def test_report_counts_entirely_absent_repeat_groups(workspace):
             run_batch(ds, root / 'partial.jsonl', c, HTTPJudge(client), registry)
     summary = report(ds, refs, root / 'partial.jsonl')
     assert summary['stability']['complete_groups'] == 1
-    assert summary['stability']['incomplete_groups'] == 19
-    assert summary['stability']['groups'] == 20
+    assert summary['stability']['incomplete_groups'] == 99
+    assert summary['stability']['groups'] == 100
 
 
 def test_interruption_during_backoff_preserves_orphan_api_attempt(workspace):
@@ -79,7 +79,7 @@ def test_interruption_during_backoff_preserves_orphan_api_attempt(workspace):
             run_batch(ds, results, c, HTTPJudge(client, sleep=interrupt), registry)
         run_batch(ds, results, c, HTTPJudge(client), registry)
     summary = report(ds, refs, results)
-    assert summary['cost']['api_calls'] == calls == 61
+    assert summary['cost']['api_calls'] == calls == 301
     assert summary['cost']['orphan_attempts'] == 1
 
 
@@ -91,7 +91,7 @@ def test_freeze_rejects_calibration_from_different_code(workspace):
         run_batch(ds, root / 'scores.jsonl', c, HTTPJudge(client), registry)
     calibration = calibrate_threshold(ds, refs, root / 'scores.jsonl', registry)
     assert calibration['configuration']['threshold'] == 8.0
-    assert calibration['pilot_f1_fail'] == pytest.approx(2/3)
+    assert calibration['pilot_f1_fail'] == pytest.approx(0.75)
     calibration['code_hash'] = 'old-code'
     with pytest.raises(ValueError, match='code'):
         freeze_experiment(ds, refs, JudgeConfig.model_validate(calibration['configuration']),
@@ -133,6 +133,6 @@ def test_report_preserves_costs_when_interrupted_before_any_result(workspace):
             run_batch(ds, root / 'empty.jsonl', c, HTTPJudge(client), registry)
     summary = report(ds, refs, root / 'empty.jsonl')
     assert summary['metrics']['recorded'] == 0
-    assert summary['metrics']['missing'] == 60
-    assert summary['stability']['incomplete_groups'] == 20
+    assert summary['metrics']['missing'] == 300
+    assert summary['stability']['incomplete_groups'] == 100
     assert summary['cost']['api_calls'] == summary['cost']['interrupted_attempts'] == 1

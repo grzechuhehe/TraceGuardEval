@@ -2,9 +2,11 @@
 
 Warsztat badawczy GSN do porównywania ocen LLM na obserwowalnych trajektoriach
 agentów naprawiających incydenty. Działa z CLI bez serwera, bazy i GPU.
-Wymagania pochodzą z [GSN_TraceGuard.pdf](GSN_TraceGuard.pdf).
+Wymagania pochodzą z [GSN_TraceGuard.md](GSN_TraceGuard.md).
 
-Wykonano E1 i E2: protokół, rubrykę, 15 scenariuszy i 60 odtwarzalnych trajektorii.
+Wykonano E1 i E2: protokół, rubrykę, 30 scenariuszy z pięciu rodzin i 150
+odtwarzalnych trajektorii. Każdy scenariusz ma dwie poprawne realizacje
+oraz trzy błędne. Podział obejmuje 100 trajektorii pilotowych i 50 testowych.
 Przygotowano narzędzia dalszych etapów. Referencje wymagają adnotacji człowieka,
 a kalibracja i badanie wymagają wybranego modelu oraz budżetu API.
 Nie ma jeszcze wyników naukowych, zamrożonych ludzkich etykiet ani raportu końcowego.
@@ -15,7 +17,7 @@ Wymagania: Python 3.12, [uv](https://docs.astral.sh/uv/), Linux lub WSL.
 
 ```bash
 uv sync --locked
-uv run traceguard validate --dataset data/gsn-v1
+uv run traceguard validate --dataset data/gsn-v2
 uv run pytest -q
 ```
 
@@ -28,6 +30,16 @@ uv run traceguard validate --dataset artifacts/reproduced
 
 Generator odmawia nadpisania istniejących danych. Zbiór jest deterministyczny,
 więc hashe i pliki obu generacji powinny być identyczne.
+Konfiguracja domyślna znajduje się w `configs/gsn-v2/`. Historyczny zbiór
+`data/gsn-v1` i jego formularze pozostają bez zmian. Aby odtworzyć v1:
+
+```bash
+uv run traceguard build --configs configs --output artifacts/reproduced-v1
+uv run traceguard validate --dataset artifacts/reproduced-v1
+```
+
+Nie mieszaj formularzy, referencji ani wyników obu zbiorów. Używają różnych
+`dataset_id`; adnotacje nowego zbioru zaczynają się od pustych formularzy.
 
 ## Struktura i granice
 
@@ -46,29 +58,34 @@ flowchart LR
 
 - `src/traceguard_core`: schematy, rubryki, adnotacje, adapter, runner i analiza.
 - `src/traceguard_sim`: stan w pamięci i rzeczywiste odtwarzanie operacji.
-- `configs`: profile GSN/PP, wersjonowana rubryka i katalog scenariuszy GSN.
-- `data/gsn-v1`: 60 trajektorii, manifest, konfiguracja i szkice referencji.
+- `configs/gsn-v2`: bieżący profil GSN, rubryka i katalog 30 scenariuszy.
+- `configs`: historyczny profil GSN v1 i odrębny profil PP.
+- `data/gsn-v2`: 150 trajektorii, manifest, konfiguracja i szkice referencji.
+- `data/gsn-v1`: zachowany historyczny zbiór 60 trajektorii.
 - `docs/protocol.md`: pytania, zasady adnotacji, podział i ograniczenia badania.
 - `docs/progress.md`: aktualny stan kamieni milowych i dalsze działania.
 - `notebooks/01_dataset.ipynb`: inspekcja materiału bez kopiowania logiki silnika.
 
-GSN ma skalę 1–10 i podział 20/40. Profil PP ma skalę 1–5 i podział 80/40
+GSN ma skalę 1-10 i podział 100/50. Każda z pięciu rodzin zawiera cztery
+scenariusze pilotowe i dwa testowe. Wspólne szablony zachowują podział v1.
+Profil PP ma skalę 1-5 i podział 80/40
 dla docelowych 120 trajektorii. Generator w tej realizacji tworzy wyłącznie GSN.
 Warstwa FastAPI/PostgreSQL projektu PP pozostaje poza zakresem tej realizacji.
 Rdzeń nie importuje FastAPI ani SQLAlchemy.
 
 ## E3: niezależne adnotacje
 
-Gotowe, nieocenione formularze znajdują się w `data/annotation_tasks/author.jsonl`
-oraz `secondary.jsonl`. Zapisana próba drugiego annotatora obejmuje 20 trajektorii,
+Gotowe, nieocenione formularze v2 znajdują się w
+`data/annotation_tasks/gsn-v2/author.jsonl` (150) oraz `secondary.jsonl` (20)
+w tym samym katalogu. Zapisana próba drugiego annotatora obejmuje 20 trajektorii,
 po dwie na scenariusz testowy; regułę i identyfikatory zawiera `secondary_sample.json`.
 Do pracy skopiować formularze do `artifacts/`, zachowując oryginały. Zastąpić
 identyfikatory `author` i `secondary` rzeczywistymi stałymi identyfikatorami osób.
 Poniższe polecenia pozwalają również wyeksportować nowe formularze.
 
 ```bash
-uv run traceguard annotations --dataset data/gsn-v1 --annotator autor --output artifacts/author.jsonl
-uv run traceguard annotations --dataset data/gsn-v1 --annotator drugi-annotator --split test --output artifacts/secondary-all.jsonl
+uv run traceguard annotations --dataset data/gsn-v2 --annotator autor --output artifacts/author.jsonl
+uv run traceguard annotations --dataset data/gsn-v2 --annotator drugi-annotator --split test --output artifacts/secondary-all.jsonl
 ```
 
 Każdy wiersz zawiera obserwacje i pusty formularz pięciu kryteriów. Annotator wpisuje
@@ -78,13 +95,13 @@ obecnych scenariuszy; przypadki niejednoznaczne trzeba rozstrzygnąć lub popraw
 przed włączeniem do głównego testu. Nie kopiować planowanych klas generatora.
 
 Drugi annotator ma pracować niezależnie, bez szkiców reguł i wyników LLM.
-Przy użyciu pełnego eksportu 40 formularzy zachować 20 identyfikatorów z gotowego
+Przy użyciu pełnego eksportu 50 formularzy zachować 20 identyfikatorów z gotowego
 `secondary_sample.json`, wybranych przed oceną. Przechować wybrane wiersze
 w `artifacts/secondary.jsonl`. To etap wykonywany
 przez człowieka; samo pole `origin: human` nie potwierdza, kto wypełnił formularz.
 
 ```bash
-uv run traceguard freeze-references --dataset data/gsn-v1 --author artifacts/author.jsonl --secondary artifacts/secondary.jsonl --output artifacts/references.json
+uv run traceguard freeze-references --dataset data/gsn-v2 --author artifacts/author.jsonl --secondary artifacts/secondary.jsonl --output artifacts/references.json
 ```
 
 Spory wymagają osobnego pliku `--adjudications` z rozstrzygniętymi formularzami.
@@ -106,7 +123,7 @@ Nazwa innej zmiennej może być podana przez `--api-key-env`. Program nie czyta 
 Nie przekazywać klucza w argumentach ani pliku konfiguracji.
 
 ```bash
-uv run traceguard run --dataset data/gsn-v1 --config artifacts/judge-global.json --registry artifacts/shared-splits.json --split pilot --output artifacts/pilot-global.jsonl
+uv run traceguard run --dataset data/gsn-v2 --config artifacts/judge-global.json --registry artifacts/shared-splits.json --split pilot --output artifacts/pilot-global.jsonl
 ```
 
 Każdy format uruchamia się osobno, w osobnym pliku wyników. Trzy powtórzenia
@@ -117,7 +134,7 @@ a nie zerowym kosztem. Błędy formatu nie uruchamiają retry.
 Dla `score` konfiguracja pilota ma `threshold: null`. Po zebraniu wyników:
 
 ```bash
-uv run traceguard calibrate --dataset data/gsn-v1 --references artifacts/references.json --results artifacts/pilot-score.jsonl --registry artifacts/shared-splits.json --output artifacts/calibration.json
+uv run traceguard calibrate --dataset data/gsn-v2 --references artifacts/references.json --results artifacts/pilot-score.jsonl --registry artifacts/shared-splits.json --output artifacts/calibration.json
 ```
 
 Pole `configuration` z kalibracji zapisać jako konfigurację formatu punktowego
@@ -127,14 +144,14 @@ Nie wybierać progu na danych testowych.
 Dla pairwise najpierw przygotować pary pilotowe:
 
 ```bash
-uv run traceguard pairs --dataset data/gsn-v1 --references artifacts/references.json --split pilot --output artifacts/pilot-pairs.json
-uv run traceguard run --dataset data/gsn-v1 --config artifacts/judge-pairwise.json --registry artifacts/shared-splits.json --pairs artifacts/pilot-pairs.json --output artifacts/pilot-pairwise.jsonl
+uv run traceguard pairs --dataset data/gsn-v2 --references artifacts/references.json --split pilot --output artifacts/pilot-pairs.json
+uv run traceguard run --dataset data/gsn-v2 --config artifacts/judge-pairwise.json --registry artifacts/shared-splits.json --pairs artifacts/pilot-pairs.json --output artifacts/pilot-pairwise.jsonl
 ```
 
 Po zakończeniu pilotażu zamrozić każdy format:
 
 ```bash
-uv run traceguard freeze --dataset data/gsn-v1 --references artifacts/references.json --config artifacts/judge-global.json --registry artifacts/shared-splits.json --output artifacts/frozen-global.json
+uv run traceguard freeze --dataset data/gsn-v2 --references artifacts/references.json --config artifacts/judge-global.json --registry artifacts/shared-splits.json --output artifacts/frozen-global.json
 ```
 
 Zamrożenie zawiera hash kodu, danych, rubryki, promptu, referencji i konfiguracji.
@@ -145,8 +162,8 @@ zastąpienie rejestru usuwa historię blokad i łamie protokół badania.
 ## E5: test, wznowienie i analiza offline
 
 ```bash
-uv run traceguard run --dataset data/gsn-v1 --config artifacts/judge-global.json --registry artifacts/shared-splits.json --split test --frozen artifacts/frozen-global.json --output artifacts/test-global.jsonl
-uv run traceguard report --dataset data/gsn-v1 --references artifacts/references.json --results artifacts/test-global.jsonl --frozen artifacts/frozen-global.json --output artifacts/report-global
+uv run traceguard run --dataset data/gsn-v2 --config artifacts/judge-global.json --registry artifacts/shared-splits.json --split test --frozen artifacts/frozen-global.json --output artifacts/test-global.jsonl
+uv run traceguard report --dataset data/gsn-v2 --references artifacts/references.json --results artifacts/test-global.jsonl --frozen artifacts/frozen-global.json --output artifacts/report-global
 ```
 
 Ponowienie identycznego `run` wznawia zapis. Ukończone oceny, także ERROR po

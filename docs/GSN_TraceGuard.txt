@@ -1,0 +1,368 @@
+ GŁĘBOKIE SIECI NEURONOWE / DOKUMENT POCZĄTKOWY
+
+
+
+ TraceGuard Eval
+ Opis i harmonogram projektu
+
+ Temat: badanie wiarygodności modeli LLM jako ewaluatorów trajektorii agentów: oceny binarne,
+ punktowe i porównania parami.
+
+   Informacja                   Wartość
+
+
+   Lista wykonawców             ................................................................................
+
+
+   Kurs                         Głębokie Sieci Neuronowe (GSN).
+
+
+   Charakter pracy              Eksperyment badawczy z gotowymi modelami głębokimi.
+
+
+   Rdzeń technologiczny         Python; traceguard_core, Pydantic, HTTPX, pytest, CLI i notebooki analityczne.
+
+
+
+ 1. Cel projektu
+ Sprawdzić, jak trafnie i stabilnie LLM ocenia poprawność działania agenta na podstawie
+ obserwowalnej trajektorii. Porównać formaty oceny przy tym samym modelu i tych samych
+ dowodach. Referencję przygotowuje się niezależnie od badanego LLM: z testów stanu symulatora,
+ jawnych reguł i adnotacji człowieka.
+
+ Problem i zakres
+ Poprawnie brzmiąca odpowiedź nie przesądza o wykonaniu zadania ani braku błędnych operacji.
+ Projekt obejmuje kontrolowane scenariusze incydentów, trajektorie, rubryki i analizę błędów
+ evaluatora. Uzasadnienie podejścia daje literatura [1-3].
+
+
+  Jak zostanie sprawdzona poprawność?
+  Testy i człowiek ustalają etykiety referencyjne. LLM ocenia bez ich znajomości, a skrypt
+  porównuje wyniki oraz mierzy przeoczenia i fałszywe alarmy. Podział odpowiedzialności opisują
+  sekcje 3-4.
+
+ Rezultaty: zbiór z dowodami, konfiguracje oceniania, wyniki, dokumentacja i prezentacja końcowa.
+
+
+
+
+TraceGuard Eval | GSN                                                                                              1/7
+ TRACEGUARD EVAL / GSN
+
+
+ 2. Plan badania i materiał eksperymentalny
+ Scenariusze i trajektorie
+ Plan obejmuje 15 scenariuszy w lokalnym, deterministycznym symulatorze usług i narzędzi:
+ odczyt logów, rozpoznanie błędnej konfiguracji, przywrócenie usługi i weryfikacja jej stanu. Każdy
+ scenariusz definiuje wejście, stan początkowy, dozwolone operacje, sukces i naruszenia
+ krytyczne.
+
+ Profil badawczy obejmuje 60 trajektorii: po 2 poprawne realizacje i 2 warianty z błędem dla
+ każdego scenariusza. Mutacje ponownie wykonuje się w symulatorze, aby stan, odpowiedzi
+ narzędzi i zapis pozostały spójne. Poprawna inna kolejność działań nie jest automatycznie błędem.
+
+ Pięć scenariuszy (20 trajektorii) służy do pilotażu, dziesięć (40) do testu. Warianty i scenariusze o
+ tym samym szablonie pozostają razem. Test jest zamrożony przed doborem promptów i progów;
+ etykiety nie trafiają do kontekstu LLM.
+
+   Metoda                     Wynik i użycie
+
+
+   Ocena globalna             Jedna decyzja PASS/FAIL dla całego przebiegu.
+
+
+   Wielokryterialna           PASS/FAIL osobno dla kryteriów z sekcji 3; jawna reguła wyniku łącznego.
+                              Podstawowy format projektu.
+
+
+   Ocena punktowa             Skala porównawcza 1-10. Próg ustalany na pilotażu i zamrożony przed testem.
+
+
+   Pairwise                   A/B/remis dla tego samego zadania. Referencja preferuje przebieg poprawny nad
+                              błędnym; dwie poprawne realizacje mogą być równoważne.
+
+
+ Porównanie formatów wykorzystuje ten sam model, zadanie, rubrykę i pełną trajektorię. Osobna
+ analiza oceni wpływ dostępu wyłącznie do odpowiedzi końcowej. Nie miesza się efektu formatu z
+ ilością dowodów.
+
+ Wersjonowana konfiguracja wspólnego rdzenia
+ Liczebności, zakres 1-10 i kryteria są konfiguracją profilu GSN, nie wartościami zaszytymi w
+ silniku. Manifest przechowuje dataset_id, profile_id, grupy, podział i rubric_id/version. Przy
+ współdzieleniu danych trzeba blokować strojenie na odpowiednikach zamrożonych grup
+ testowych z innych uruchomień.
+ Zapis obejmuje polecenie, kolejność wywołań, argumenty, odpowiedzi, błędy, stan końcowy, odpowiedź agenta,
+ czas i zużycie tokenów. Prywatne rozumowanie modelu nie jest wymagane.
+
+
+
+
+TraceGuard Eval | GSN                                                                                         2/7
+ TRACEGUARD EVAL / GSN
+
+
+ 3. Ocena poprawności wykonania zadania
+ 3.1. Co i kto ustala ocenę referencyjną?
+
+   Podmiot / mechanizm       Odpowiedzialność
+
+
+   Wykonawca projektu        Przed eksperymentem definiuje zadanie, warunki sukcesu i rubrykę.
+                             Przygotowuje testy i dowody; nie dopasowuje ich do ocen LLM.
+
+
+   Testy deterministyczne    Sprawdzają stan symulatora, schematy i znaczenie argumentów, zasoby oraz
+                             ograniczenia; nie opierają się na deklaracji agenta.
+
+
+   Człowiek                  Autor sprawdza komplet etykiet i kryteria opisowe. Plan zakłada drugiego
+                             niezależnego annotatora dla 20 trajektorii testowych.
+
+
+   Badany LLM                Przewiduje ocenę bez dostępu do referencji. Jego uzasadnienie nie staje się
+                             automatycznie prawdą odniesienia.
+
+
+
+ 3.2. Kryteria PASS/FAIL i niezależne dowody
+
+   Kryterium                Warunek PASS / dowód
+
+
+   Wykonanie zadania        Wymagany stan końcowy osiągnięty; odczyt stanu i test warunków sukcesu.
+
+
+   Dobór narzędzi           Narzędzia i wymagane sprawdzenia zgodne ze specyfikacją; reguły
+                            dopuszczalności, warunki operacji i log.
+
+
+   Argumenty                Poprawne typy, wartości i zasób docelowy; schemat oraz reguły scenariusza.
+
+
+   Ograniczenia             Brak zabronionej operacji lub zmiany poza zakresem; dziennik i porównanie
+                            chronionego stanu.
+
+
+   Zgodność odpowiedzi      Twierdzenia odpowiadają obserwacjom; adnotacja człowieka z odwołaniem do
+                            zdarzeń.
+
+
+ Wynik łączny: PASS wymaga wszystkich adekwatnych kryteriów PASS. FAIL dowolnego
+ kryterium daje FAIL całości; naruszenia krytycznego nie kompensują pozostałe wyniki.
+
+ Wspólny kontrakt rozróżnia NA (nie ma zastosowania), INDETERMINATE (brak dowodów) i ERROR
+ (status techniczny). Brak rozstrzygnięcia nie oznacza PASS ani FAIL agenta. W eksporcie N/A jest
+ prezentacją technicznej wartości NA.
+
+
+  Przykład rozstrzygnięcia
+  Przywrócić usługę bez usuwania logów. Usługa działa, ale agent usunął logi: wykonanie zadania
+  = PASS, ograniczenia = FAIL, całość = FAIL. Decydują stan i dziennik symulatora, nie opinia LLM.
+
+
+
+
+TraceGuard Eval | GSN                                                                                      3/7
+ TRACEGUARD EVAL / GSN
+
+
+ 4. Weryfikacja trafności evaluatora
+ 4.1. Procedura walidacji ocen
+ 1. Przygotować testy i referencje z dowodami. W podwójnie ocenianej próbie annotatorzy pracują
+ niezależnie, bez wyników LLM. Rozbieżności rozstrzyga się przed testem końcowym;
+ niejednoznaczności dokumentuje oddzielnie.
+
+ 2. Na pilotażu ustalić prompty, agregację, próg punktowy i parametry wywołań. Zamrozić model,
+ konfigurację i podział; nie stroić na teście.
+
+ 3. Uruchomić każdą metodę trzykrotnie. Przygotować 20 par tych samych zadań, również z
+ remisami; każdą ocenić w obu kolejnościach A/B. Powtórzenia badawcze omijają cache
+ odpowiedzi.
+
+ 4. Skrypt porównuje wynik z referencją, a autor analizuje błędy. Prowadzący ocenia projekt na
+ podstawie dokumentacji, wyników, kodu i prezentacji.
+
+ 4.2. Miary poprawności i stabilności
+
+   Miara                      Co podlega pomiarowi
+
+
+   Wykrywanie błędów          Macierz pomyłek, precision, recall i F1 dla FAIL; osobno przeoczone naruszenia
+                              krytyczne i fałszywe alarmy.
+
+
+   Zgodność ocen              Accuracy, wyniki kryteriów, zgodność procentowa i Cohen’s kappa dwóch
+                              annotatorów, z liczebnością próby.
+
+
+   Stabilność                 Niezmienione etykiety w trzech powtórzeniach; zgodność par z referencją i zmiany
+                              po zamianie A/B.
+
+
+   Pokrycie i koszt           Rozstrzygnięte przypadki, odmowy, INDETERMINATE, ERROR i błędy formatu; czas,
+                              wywołania i tokeny, także surowe liczby.
+
+
+ Główny test wymaga dowodów wystarczających do rozstrzygnięcia. Braki i błędy nie mogą cicho
+ znikać z raportu. Bez drugiego annotatora opisuje się to ograniczenie i nie raportuje zgodności
+ między osobami.
+
+ 4.3. Kryteria sukcesu projektu
+ Zbiór z niezależnymi dowodami, rozdzielony pilot i test, porównanie metod, trzy powtórzenia,
+ analiza błędów i odtwarzalna dokumentacja. Przewaga jednej metody nie jest narzuconym
+ wynikiem. Arbitralny próg typu „90% accuracy” nie zastępuje eksperymentu.
+ Wnioski z małego zbioru są pilotażowe. Raportować liczebności i rozrzut; warianty jednego scenariusza nie są
+ niezależnymi zadaniami. Kontrolowany rozkład błędów nie określa częstości błędów w rzeczywistym użyciu.
+
+
+
+
+TraceGuard Eval | GSN                                                                                           4/7
+ TRACEGUARD EVAL / GSN
+
+
+ 5. Stack Python i współdzielony rdzeń
+ Badanie korzysta z tego samego pakietu domenowego co część aplikacyjna. Format danych i
+ wywołanie evaluatora są wspólne; zakres badawczy nie wymaga uruchamiania serwera HTTP ani
+ bazy.
+
+   Warstwa                    Technologie i zastosowanie
+
+
+   Rdzeń                      Python, traceguard_core, Pydantic 2: Trace, Rubric, EvaluationResult, etykiety i
+                              manifesty; jawne wersje schematów.
+
+
+   Symulator                  traceguard_sim: deterministyczny stan, narzędzia, kontrolowane mutacje i testy
+                              referencyjne.
+
+
+   LLM                        HTTPX + wymienny adapter API; ten sam adapter, model i parametry we
+                              wszystkich porównywanych formatach.
+
+
+   Uruchamianie               CLI i Jupyter; runner zapisuje konfiguracje oraz wyniki JSONL/CSV i może wznowić
+                              przerwany eksperyment.
+
+
+   Analiza                    pandas, NumPy, scikit-learn [4], Matplotlib: metryki, macierze pomyłek, stabilność
+                              i koszt.
+
+
+   Testy                      pytest oraz unittest.mock/respx: stan symulatora, rubryki, parser odpowiedzi,
+                              obsługa braków i błędów API.
+
+
+   Środowisko                 uv, pyproject.toml, uv.lock, Git; przypięta wersja Pythona i zależności, hashe
+                              danych oraz promptów.
+
+
+   Integracja opcjonalna      FastAPI/Jinja2 oraz PostgreSQL/SQLAlchemy/Alembic mogą prezentować i
+                              zapisywać wyniki; nie są wymagane do odtworzenia eksperymentu.
+
+
+
+ Granice i kontrakty
+ Rdzeń nie zależy od FastAPI ani SQLAlchemy. Zewnętrzne repozytorium implementuje zapis do
+ plików lub bazy; logika rubryk i parser LLM nie jest kopiowana do notebooków. Konfiguracja skali
+ 1-10 i badawcze porównania parami pozostają w profilu eksperymentu.
+
+ Trace i wynik są identyfikowane hashem oraz wersją. Etykiety referencyjne i informacje o mutacji
+ nie są częścią payloadu LLM. Cache zawiera konfigurację i repeat_id; retry dotyczy wyłącznie
+ błędów technicznych i pozostaje widoczny w kosztach.
+ Rdzeniem zaliczenia jest badanie gotowych modeli głębokich. Model i budżet API wybiera się po pilotażu. Raport da
+ się odtworzyć offline z zapisanych odpowiedzi; eksperyment nie wymaga lokalnego GPU.
+
+
+
+
+TraceGuard Eval | GSN                                                                                           5/7
+ TRACEGUARD EVAL / GSN
+
+
+ 6. Harmonogram z kamieniami milowymi
+ Harmonogram określa kolejność prac i kamienie milowe. Udziały procentowe oznaczają
+ planowany podział czasu realizacji. Dokumentacja powstaje w każdym etapie.
+
+   Etap / udział        Prace i kamień milowy
+
+
+   E1 / 10%             Definicja pytań, scenariuszy i rubryki. KM1: opis zadania, kryteria oraz zasady
+                        referencji.
+
+
+   E2 / 25%             Symulator i zbiór. KM2: 60 spójnych przebiegów, manifest podziału oraz testy
+                        referencyjne.
+
+
+   E3 / 15%             Adnotacje, niezależna weryfikacja próby i spory. KM3: zamrożone etykiety z dowodami.
+
+
+   E4 / 15%             Kalibracja na pilotażu. KM4: zamrożone prompty, progi, model, lista par i konfiguracja.
+
+
+   E5 / 20%             Test końcowy, powtórzenia i analiza błędów. KM5: komplet surowych wyników, metryk
+                        i porównań.
+
+
+   E6 / 15%             Dokumentacja i prezentacja. KM6: raport, kod, instrukcja odtworzenia i pokaz na
+                        końcowych zajęciach.
+
+
+
+ Kontrola postępu
+ Na każdym kamieniu milowym zapisać ukończone artefakty, wynik weryfikacji i ryzyka. W pilotażu
+ sprawdzić koszt oraz format odpowiedzi, zanim uruchomiona zostanie pełna partia.
+
+ Przed testem końcowym należy zamrozić kod, manifest, rubrykę i progi. Zmiana tych elementów
+ po obejrzeniu wyników testowych wymaga nowego zbioru testowego albo jawnego oznaczenia
+ analizy jako eksploracyjnej.
+
+
+  Oddzielne rezultaty badania
+  Wynikiem są porównania, miary stabilności i błędów oraz uzasadnione ograniczenia. Ukończenie
+  wspólnego oprogramowania nie zastępuje eksperymentu; negatywny wynik hipotezy nie
+  oznacza niepowodzenia projektu.
+
+
+
+
+TraceGuard Eval | GSN                                                                                       6/7
+ TRACEGUARD EVAL / GSN
+
+
+ 7. Dokumentacja i wstępna bibliografia
+ Dokumentacja prowadzona na bieżąco
+ Zapisywać scenariusze, kryteria, testy, decyzje etykietowania i zmiany zakresu. Dziennik
+ eksperymentów zawiera wersje danych i kodu, prompt, model, parametry, czas, tokeny, wyniki i
+ wniosek. Istotne nieudane próby także wymagają wpisu.
+
+ Raport i prezentacja końcowa
+ Raport: problem, dane, referencja, metody, protokół, wyniki, błędy, ograniczenia i odtworzenie.
+ Prezentacja pokaże różnicę między sukcesem zadania a poprawnością całej trajektorii oraz co
+ najmniej jeden przykład pomyłki evaluatora.
+
+ Wstępna bibliografia
+ [1] Zhuge, M. i in. (2025). Agent-as-a-Judge: Evaluate Agents with Agents. ICML, PMLR 267, 80569-80611. Otwórz
+ źródło
+
+ [2] Lù, X. H. i in. (2025). AgentRewardBench: Evaluating Automatic Evaluations of Web Agent Trajectories.
+ arXiv:2504.08942, v2. Otwórz źródło
+
+ [3] Zheng, L. i in. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena. arXiv:2306.05685. Otwórz
+ źródło
+
+ [4] scikit-learn. Model evaluation: quantifying the quality of predictions. Dokumentacja metryk. Otwórz źródło
+
+ [5] Wspólny stack: Pydantic, HTTPX, uv; opcjonalna warstwa aplikacyjna: FastAPI, SQLAlchemy i Alembic.
+
+ Możliwe kierunki rozwoju
+ Nowe domeny, większy zbiór, kilku judge’ów i dodatkowi annotatorzy; porównanie reguł, LLM i
+ evaluatora hybrydowego. Opcjonalnym późniejszym krokiem jest dostrojenie małego modelu do
+ wybranych kryteriów.
+
+
+
+
+TraceGuard Eval | GSN                                                                                             7/7
+

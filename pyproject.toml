@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.25,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "traceguard"
+version = "0.1.0"
+description = "Reproducible offline evaluation of incident-response agent trajectories"
+requires-python = ">=3.12,<3.13"
+dependencies = ["pydantic>=2.9,<3", "httpx>=0.27,<1"]
+
+[project.scripts]
+traceguard = "traceguard_core.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+analysis = ["pandas>=2,<4", "numpy>=2,<3", "scikit-learn>=1.5,<2", "matplotlib>=3.9,<4", "jupyter>=1,<2"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/traceguard_core", "src/traceguard_sim"]
+
+[tool.hatch.build.targets.wheel.force-include]
+configs = "traceguard_core/configs"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

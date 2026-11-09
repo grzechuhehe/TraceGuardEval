@@ -55,7 +55,8 @@ def build_dataset(directory: Path, configs: Path = CONFIGS) -> None:
     rubric = Rubric.model_validate(read_json(configs / 'rubric.json')).model_dump()
     traces, entries, drafts = [], [], []
     for i, scenario in enumerate(scenarios):
-        for mutation, planned, trace in variants(scenario, i):
+        for mutation, planned, trace in variants(scenario, i, correct_count=profile.correct_per_scenario,
+                                                 incorrect_count=profile.incorrect_per_scenario):
             traces.append(trace)
             entries.append(ManifestEntry(trace_id=trace.trace_id, scenario_id=scenario.scenario_id,
                                          template_group=scenario.template_group, split=scenario.split))
@@ -119,14 +120,26 @@ def validate_dataset(directory: Path) -> dict:
         if t.trace_id != t.content_hash():
             raise ValueError('Trace content hash mismatch')
         replay(t, s)
-    if any(len(parts) != 1 for parts in grouped.values()) or any(
+    if set(by_scenario) != set(d.scenarios) or any(len(parts) != 1 for parts in grouped.values()) or any(
         n != p.correct_per_scenario + p.incorrect_per_scenario for n in by_scenario.values()
     ):
         raise ValueError('Template leakage or incomplete scenario')
     if len(d.drafts) != len(ids) or {r['trace_id'] for r in d.drafts} != set(ids):
         raise ValueError('Missing reference drafts')
+    drafts = {r['trace_id']: r for r in d.drafts}
+    for scenario_id in d.scenarios:
+        rows = [drafts[t.trace_id] for t in d.traces if t.scenario_id == scenario_id]
+        if Counter(r.get('planned_class') for r in rows) != {
+            'PASS': p.correct_per_scenario, 'FAIL': p.incorrect_per_scenario
+        }:
+            raise ValueError('Planned class counts differ from profile')
+        mutations = [r.get('mutation') for r in rows if r.get('planned_class') == 'FAIL']
+        if len(set(mutations)) != len(mutations) or any(m in {None, 'none'} for m in mutations):
+            raise ValueError('Missing or duplicate fault mutations')
+        if any(r.get('mutation') != 'none' for r in rows if r.get('planned_class') == 'PASS'):
+            raise ValueError('Correct trajectory marked as mutated')
     for trace in d.traces:
-        draft = next(r for r in d.drafts if r['trace_id'] == trace.trace_id)
+        draft = drafts[trace.trace_id]
         if any(draft[k] != v for k, v in reference_rules(trace, d.scenarios[trace.scenario_id]).model_dump().items()):
             raise ValueError('Reference rules differ from replayed trace')
     return {'dataset_id': m.dataset_id, 'scenarios': len(d.scenarios), 'trajectories': len(ids),

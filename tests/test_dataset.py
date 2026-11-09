@@ -1,11 +1,12 @@
 import json
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
-from traceguard_core.dataset import build_dataset, load_dataset, validate_dataset
-from traceguard_core.models import digest
-from traceguard_sim.engine import replay
+from traceguard_core.dataset import build_dataset, load_dataset, read_json, read_jsonl, validate_dataset, write_json, write_jsonl
+from traceguard_core.models import Scenario, digest
+from traceguard_sim.engine import replay, variants
 
 
 def test_sixty_replayable_balanced_traces_and_grouped_split(tmp_path):
@@ -21,6 +22,68 @@ def test_sixty_replayable_balanced_traces_and_grouped_split(tmp_path):
     assert Counter(r['planned_class'] for r in dataset.drafts) == {'PASS': 30, 'FAIL': 30}
     assert all(replay(t, dataset.scenarios[t.scenario_id]) == t for t in dataset.traces)
     assert validate_dataset(tmp_path)['trajectories'] == 60
+
+
+def test_v2_has_two_correct_and_three_distinct_faults_per_scenario(tmp_path):
+    build_dataset(tmp_path, Path('configs/gsn-v2'))
+    dataset = load_dataset(tmp_path)
+    assert validate_dataset(tmp_path)['trajectories'] == 150
+    assert Counter(e.split for e in dataset.manifest.entries) == {'pilot': 100, 'test': 50}
+    drafts = {d['trace_id']: d for d in dataset.drafts}
+    for scenario in dataset.scenarios.values():
+        traces = [t for t in dataset.traces if t.scenario_id == scenario.scenario_id]
+        rows = [drafts[t.trace_id] for t in traces]
+        assert len({t.trace_id for t in traces}) == 5
+        assert Counter(r['planned_class'] for r in rows) == {'PASS': 2, 'FAIL': 3}
+        assert len({r['mutation'] for r in rows if r['planned_class'] == 'FAIL'}) == 3
+        for trace in traces:
+            assert replay(trace, scenario) == trace
+            row = drafts[trace.trace_id]
+            verdicts = {v['verdict'] for v in row['criteria'].values()}
+            if row['planned_class'] == 'PASS':
+                assert verdicts == {'PASS', 'INDETERMINATE'}
+            elif row['mutation'] == 'false_claim':
+                assert 'Nie odczytano logów' in trace.final_answer
+                assert any(e.tool == 'read_logs' for e in trace.events)
+                assert any(e.tool == 'set_config' and e.error is None for e in trace.events)
+            else:
+                assert 'FAIL' in verdicts
+
+
+def test_legacy_dataset_is_byte_identical(tmp_path):
+    build_dataset(tmp_path, Path('configs'))
+    for expected in Path('data/gsn-v1').iterdir():
+        assert (tmp_path / expected.name).read_bytes() == expected.read_bytes()
+
+
+@pytest.mark.parametrize(('correct', 'incorrect'), [(0, 3), (3, 3), (2, 0), (2, 8)])
+def test_generator_rejects_unsupported_variant_counts(correct, incorrect):
+    scenario = Scenario.model_validate(read_json(Path('configs/scenarios.json'))[0])
+    with pytest.raises(ValueError, match='variant counts'):
+        variants(scenario, 0, correct_count=correct, incorrect_count=incorrect)
+
+
+def test_build_rejects_unsupported_counts_without_writing_dataset(tmp_path):
+    configs = tmp_path / 'configs'
+    configs.mkdir()
+    for name in ('gsn.json', 'scenarios.json', 'rubric.json'):
+        write_json(configs / name, read_json(Path('configs') / name))
+    profile = read_json(configs / 'gsn.json')
+    profile.update(correct_per_scenario=3, incorrect_per_scenario=1)
+    write_json(configs / 'gsn.json', profile)
+    output = tmp_path / 'dataset'
+    with pytest.raises(ValueError, match='variant counts'):
+        build_dataset(output, configs)
+    assert not output.exists()
+
+
+def test_validator_rejects_tampered_class_counts(tmp_path):
+    build_dataset(tmp_path)
+    rows = read_jsonl(tmp_path / 'reference_drafts.jsonl')
+    rows[0]['planned_class'] = 'FAIL'
+    write_jsonl(tmp_path / 'reference_drafts.jsonl', rows)
+    with pytest.raises(ValueError, match='class counts'):
+        validate_dataset(tmp_path)
 
 
 def test_generation_is_deterministic_and_does_not_overwrite(tmp_path):

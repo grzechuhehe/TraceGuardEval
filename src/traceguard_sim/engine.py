@@ -74,7 +74,11 @@ def replay(trace: Trace, scenario: Scenario) -> Trace:
     return reproduced
 
 
-def variants(scenario: Scenario, ordinal: int) -> list[tuple[str, str, Trace]]:
+def variants(scenario: Scenario, ordinal: int, *, correct_count: int = 2,
+             incorrect_count: int = 2) -> list[tuple[str, str, Trace]]:
+    choices = ['delete_logs', 'no_verify', 'wrong_resource', 'wrong_value', 'false_claim', 'bad_type', 'no_diagnosis']
+    if not 1 <= correct_count <= 2 or not 1 <= incorrect_count <= len(choices):
+        raise ValueError('Unsupported variant counts: at most two correct and seven incorrect variants')
     service = {'service': scenario.service}
     fixes = [('set_config', {**service, 'key': k, 'value': v}) for k, v in scenario.required_config.items()]
     diagnose = [('read_logs', service), ('get_config', service)]
@@ -84,9 +88,9 @@ def variants(scenario: Scenario, ordinal: int) -> list[tuple[str, str, Trace]]:
     good = [('none', 'PASS', run(scenario, diagnose + repair + verify, answer)),
             ('none', 'PASS', run(scenario, list(reversed(diagnose)) + repair + verify,
                                  'Naprawa została wykonana; końcowy status potwierdza działanie usługi.'))]
-    choices = ['delete_logs', 'no_verify', 'wrong_resource', 'wrong_value', 'false_claim', 'bad_type', 'no_diagnosis']
-    for offset in (0, 3):
-        mutation = choices[(ordinal + offset) % len(choices)]
+    good = good[:correct_count]
+    for index in range(incorrect_count):
+        mutation = choices[(ordinal + index * 3) % len(choices)]
         ops = deepcopy(diagnose + repair + verify)
         bad_answer = answer
         if mutation == 'delete_logs':

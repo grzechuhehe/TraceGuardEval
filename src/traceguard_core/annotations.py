@@ -30,7 +30,7 @@ def _checked(rows: list[dict], traces: dict, expected: set[str] | None = None) -
             raise ValueError('Independent human review is required')
         if row.get('observation') != trace.judge_payload():
             raise ValueError('Annotation observation differs from original trace')
-        if set(row['criteria']) != set(CRITERIA):
+        if not isinstance(row['criteria'], dict) or set(row['criteria']) != set(CRITERIA):
             raise ValueError('All rubric criteria are required')
         evidence_ids = {e.event_id for e in trace.events} | {'answer'}
         for data in row['criteria'].values():

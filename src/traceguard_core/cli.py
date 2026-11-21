@@ -11,6 +11,7 @@ from pathlib import Path
 import httpx
 
 from traceguard_core.analysis import calibrate_threshold, report
+from traceguard_core.annotation_cli import annotate
 from traceguard_core.annotations import export_forms, freeze_references
 from traceguard_core.dataset import CONFIGS, build_dataset, load_dataset, read_json, validate_dataset, write_json, write_jsonl
 from traceguard_core.evaluation import HTTPJudge, JudgeConfig
@@ -36,6 +37,11 @@ def parser() -> argparse.ArgumentParser:
     annotations.add_argument('--annotator', required=True)
     annotations.add_argument('--split', choices=['pilot', 'test'])
     annotations.add_argument('--output', type=Path, required=True)
+    review = commands.add_parser('annotate', help='Interaktywna ocena ślepych formularzy z zapisem i wznowieniem')
+    review.add_argument('--dataset', type=Path, required=True)
+    review.add_argument('--forms', type=Path, required=True, help='Puste formularze, także próba drugiego annotatora')
+    review.add_argument('--annotator', required=True, help='Stały identyfikator osoby oceniającej')
+    review.add_argument('--output', type=Path, required=True, help='Roboczy plik JSONL; ponowienie wznawia sesję')
     refs = commands.add_parser('freeze-references', help='Zamroź sprawdzone przez człowieka referencje')
     refs.add_argument('--dataset', type=Path, required=True)
     refs.add_argument('--author', type=Path, required=True)
@@ -88,6 +94,8 @@ def main(argv: list[str] | None = None) -> int:
             rows = export_forms(args.dataset, args.annotator, args.split)
             write_jsonl(args.output, rows)
             result = {'forms': len(rows), 'output': str(args.output)}
+        elif args.command == 'annotate':
+            result = annotate(args.dataset, args.forms, args.annotator, args.output)
         elif args.command == 'freeze-references':
             snapshot = freeze_references(args.dataset, args.author, args.output, args.secondary, args.adjudications)
             result = {'reference_hash': snapshot['reference_hash'], 'references': len(snapshot['references'])}

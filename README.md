@@ -79,9 +79,33 @@ Gotowe, nieocenione formularze v2 znajdują się w
 `data/annotation_tasks/gsn-v2/author.jsonl` (150) oraz `secondary.jsonl` (20)
 w tym samym katalogu. Zapisana próba drugiego annotatora obejmuje 20 trajektorii,
 po dwie na scenariusz testowy; regułę i identyfikatory zawiera `secondary_sample.json`.
-Do pracy skopiować formularze do `artifacts/`, zachowując oryginały. Zastąpić
-identyfikatory `author` i `secondary` rzeczywistymi stałymi identyfikatorami osób.
-Poniższe polecenia pozwalają również wyeksportować nowe formularze.
+Źródłowych formularzy nie edytować. Interaktywny tryb zapisuje oceny oddzielnie
+w `artifacts/` i przypisuje je do osoby wskazanej przez `--annotator`:
+
+```bash
+uv run traceguard annotate --dataset data/gsn-v2 --forms data/annotation_tasks/gsn-v2/author.jsonl --annotator autor --output artifacts/author.jsonl
+uv run traceguard annotate --dataset data/gsn-v2 --forms data/annotation_tasks/gsn-v2/secondary.jsonl --annotator druga-osoba --output artifacts/secondary.jsonl
+```
+
+Program pokazuje zadanie, zdarzenia, odpowiedź agenta i rubrykę. Dla każdego
+kryterium wymaga `PASS` albo `FAIL`, istniejących dowodów (np. `e1, e5, answer`)
+i uzasadnienia. Nie pokazuje szkiców referencji ani planowanych klas generatora.
+Dopiero jawne potwierdzenie sprawdzenia całej trajektorii zapisuje `reviewed: true`.
+Nie zgadywać w przypadkach niejednoznacznych: przerwać ocenę i wyjaśnić problem
+przed zamrożeniem referencji.
+
+`q` w dowolnym pytaniu, Ctrl+C lub koniec wejścia przerywa sesję. Oceny wcześniej
+potwierdzonych trajektorii pozostają zapisane; bieżącą, niepotwierdzoną trajektorię
+przy wznowieniu ocenia się od początku. Ponowienie tego samego polecenia pomija
+ukończone formularze. Zachować plik JSONL i towarzyszący mu `.session.json`.
+Metadane wiążą sesję ze zbiorem, zestawem formularzy i annotatorem. Nie można
+wznowić pliku innej osoby ani równocześnie edytować tej samej sesji. Formularze
+źródłowe muszą pozostać pustym, niezmienionym wejściem. Podsumowanie JSON trafia
+na stdout, a pytania i obserwacje na stderr. Samo potwierdzenie w CLI nie dowodzi
+tożsamości ani niezależności osoby oceniającej.
+
+Alternatywnie można wyeksportować formularze do ręcznej edycji JSONL, zachowując
+oryginały i nadając rzeczywiste stałe identyfikatory osób:
 
 ```bash
 uv run traceguard annotations --dataset data/gsn-v2 --annotator autor --output artifacts/author.jsonl

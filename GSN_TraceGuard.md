@@ -25,11 +25,17 @@ Rezultatami projektu są zbiór z dowodami, konfiguracje oceniania, surowe wynik
 
 ## 2. Plan badania i materiał eksperymentalny
 
-### Scenariusze i trajektorie
+### Rozszerzenie zakresu
 
-Plan obejmuje 30 scenariuszy bazowych z pięciu rodzin incydentów w lokalnym, deterministycznym symulatorze usług i narzędzi. Zadania obejmują odczyt logów, rozpoznanie przyczyny incydentu, przywrócenie usługi i weryfikację jej stanu. Każdy scenariusz definiuje wejście, stan początkowy, dozwolone operacje, warunki sukcesu i naruszenia krytyczne. Katalog scenariuszy określa przynależność do rodzin.
+Obowiązuje [rozszerzony zakres badania](GSN_TraceGuard_rozszerzenie.md): trzy poziomy trudności, większa różnorodność niezależnych zadań i poprawnych strategii, trajektorie rzeczywiście wykonane przez agenta oraz porównanie ocen LLM z metodami bazowymi. Szczegóły kontraktów, etapów implementacji i warunków odbioru zawiera ten dokument.
 
-Zbiór obejmuje 150 trajektorii: po 2 poprawne realizacje i 3 warianty z błędem dla każdego scenariusza. Dwie poprawne realizacje pozwalają porównać różne dopuszczalne sposoby wykonania tego samego zadania. Mutacje ponownie wykonuje się w symulatorze, aby stan, odpowiedzi narzędzi i zapis pozostały spójne. Inna poprawna kolejność działań nie jest automatycznie błędem.
+Dotychczasowy zbiór v2 pozostaje kontrolą łatwych przypadków i testem oprogramowania. Nie jest docelowym benchmarkiem rozszerzonego badania. Przed masowymi adnotacjami wracamy do projektowania materiału i pilotażu wykonalności. Docelowe liczebności niezależnych grup, trajektorii i podwójnych adnotacji ustalimy na podstawie kosztu, trudności i czasu pracy człowieka, przed właściwym testem. Nie zwiększamy liczebności przez samo powielanie szablonów.
+
+### Dotychczasowy zbiór kontrolny v2
+
+Zrealizowany zakres v2 obejmuje 30 scenariuszy bazowych z pięciu rodzin incydentów w lokalnym, deterministycznym symulatorze usług i narzędzi. Zadania obejmują odczyt logów, rozpoznanie przyczyny incydentu, przywrócenie usługi i weryfikację jej stanu. Każdy scenariusz definiuje wejście, stan początkowy, dozwolone operacje, warunki sukcesu i naruszenia krytyczne. Katalog scenariuszy określa przynależność do rodzin.
+
+Kontrolny zbiór v2 obejmuje 150 trajektorii: po 2 poprawne realizacje i 3 warianty z błędem dla każdego scenariusza. Dwie poprawne realizacje pozwalają porównać różne dopuszczalne sposoby wykonania tego samego zadania. Mutacje ponownie wykonuje się w symulatorze, aby stan, odpowiedzi narzędzi i zapis pozostały spójne. Inna poprawna kolejność działań nie jest automatycznie błędem.
 
 | Część zbioru | Scenariusze | Trajektorie | Zastosowanie |
 | --- | --- | --- | --- |
@@ -48,7 +54,7 @@ Warianty i scenariusze o tym samym szablonie pozostają razem. Przydział grup d
 | Ocena punktowa | Skala 1-10. Próg ustalany na pilotażu i zamrożony przed testem |
 | Porównanie parami | Wybór A, B albo remisu dla tego samego zadania. Referencja preferuje przebieg poprawny nad błędnym. Dwie poprawne realizacje mogą być równoważne |
 
-Porównanie formatów wykorzystuje ten sam model, zadanie, rubrykę i pełną trajektorię. Osobna analiza ocenia wpływ dostępu wyłącznie do odpowiedzi końcowej. Efekt formatu oceny jest oddzielony od wpływu ilości dowodów.
+Porównanie formatów wykorzystuje ten sam model, zadanie, rubrykę i pełną trajektorię. Osobna analiza ocenia wpływ dostępu wyłącznie do odpowiedzi końcowej. Efekt formatu oceny jest oddzielony od wpływu ilości dowodów. Rozszerzenie dodaje stałą predykcję i metodę regułową korzystającą wyłącznie z obserwowalnych danych. Porównanie różnych modeli jest odrębną osią badania. Reguły wykorzystujące prywatny stan służą do referencji, nie jako bezpośredni konkurent LLM.
 
 ### Wersjonowana konfiguracja
 
@@ -66,7 +72,7 @@ Zapis trajektorii obejmuje polecenie, kolejność wywołań, argumenty, odpowied
 | --- | --- |
 | Wykonawca projektu | Przed eksperymentem definiuje zadanie, warunki sukcesu i rubrykę. Przygotowuje testy i dowody, bez dopasowywania ich do ocen LLM |
 | Testy deterministyczne | Sprawdzają stan symulatora, schematy i znaczenie argumentów, zasoby oraz ograniczenia. Nie opierają się na deklaracji agenta |
-| Człowiek | Autor sprawdza komplet 150 etykiet i kryteria opisowe. Plan zakłada drugiego niezależnego annotatora dla 20 trajektorii testowych |
+| Człowiek | Autor sprawdza wszystkie etykiety i kryteria opisowe docelowego zbioru. Liczebność niezależnej próby drugiego annotatora ustalamy przed ocenianiem na podstawie pilotażu wykonalności. Historyczny plan v2 obejmował 150 i 20 trajektorii |
 | Badany LLM | Przewiduje ocenę bez dostępu do referencji. Jego uzasadnienie nie staje się automatycznie prawdą odniesienia |
 
 ### 3.2. Kryteria i niezależne dowody
@@ -148,8 +154,8 @@ Harmonogram określa kolejność prac. Udziały procentowe oznaczają planowany 
 
 | Etap | Udział czasu | Prace i kamień milowy |
 | --- | --- | --- |
-| E1 | 10% | Definicja pytań, scenariuszy i rubryki. KM1: opis zadania, kryteria i zasady referencji |
-| E2 | 25% | Symulator i zbiór. KM2: 30 scenariuszy z pięciu rodzin, 150 spójnych przebiegów, manifest podziału 100/50 i testy referencyjne |
+| E1 | 10% | Aktualizacja protokołu o trudność, niezależność zadań, źródło trajektorii i metody bazowe. KM1: przyjęty protokół rozszerzonego badania |
+| E2 | 25% | Rozszerzenie symulatora, katalogu i runnera agenta, baseline oraz pilot wykonalności. KM2: wersjonowany zbiór o ustalonej skali, rozdzielone grupy, testy referencyjne i jawne źródła trajektorii |
 | E3 | 15% | Adnotacje, niezależna weryfikacja próby i spory. KM3: zamrożone etykiety z dowodami |
 | E4 | 15% | Kalibracja na pilotażu. KM4: zamrożone prompty, progi, model, lista par i konfiguracja |
 | E5 | 20% | Test końcowy, powtórzenia i analiza błędów. KM5: komplet surowych wyników, metryk i porównań |
